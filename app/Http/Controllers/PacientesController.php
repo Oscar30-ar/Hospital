@@ -88,4 +88,29 @@ class PacientesController
         $pacientes->delete();
         return response()->json(['message' => "Paciente eliminado correctamente"]);
     }
+
+    public function listarHombres(){
+        $mujeres = Pacientes::where('genero','Masculino')->get();
+        return response()->json($mujeres);
+    }
+ 
+
+    public function listarCitasDePaciente($id)
+    {
+        $pacientes = Pacientes::find($id);
+
+        if (!$pacientes) {
+            return response()->json(['message' => 'Paciente no encontrado.'], 404);
+        }
+
+        $citas = $pacientes->appointments;
+        return response()->json($citas);
+    }
+
+
+    public function contarPacientes()
+    {
+        $pacientes = Pacientes::count();
+        return response()->json(['total_pacientes' => $pacientes]);
+    }
 } 

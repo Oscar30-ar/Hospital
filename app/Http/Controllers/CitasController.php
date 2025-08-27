@@ -78,4 +78,11 @@ class CitasController extends Controller
         $citas->delete();
         return response()->json(['message' => "Cita eliminada correctamente"]);
     }
+
+    public function totalCitas(){
+        $totalCitas = Citas::count();
+        return response()->json(['totalCitas'=>$totalCitas]);
+    }
+
+    
 }

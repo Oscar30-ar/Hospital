@@ -75,4 +75,15 @@ class DoctoresController extends Controller
         $doctores->delete();
         return response()->json(['message' => "Doctor eliminado correctamente"]);
     }
+
+    public function buscarDoctorPorCedula($id)
+    {
+        $doctores = Doctores::where('documento', $id)->first();
+
+        if (!$doctores) {
+            return response()->json(['message' => 'Doctor no encontrado.'], 404);
+        }
+
+        return response()->json($doctores);
+    }
 }

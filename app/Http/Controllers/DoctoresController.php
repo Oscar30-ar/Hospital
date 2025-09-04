@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Doctores;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Support\Facades\Hash; 
 
 class DoctoresController extends Controller
 {
@@ -19,9 +19,9 @@ class DoctoresController extends Controller
         $validator = Validator::make($request->all(),[
             'nombre'=> 'required|string|max:255',
             'apellido'=> 'required|string|max:255',
-            'documento'=> 'required|integer',
-            'correo'=> 'string|max:255',
-            'clave'=> 'required|string|max:10',
+            'documento'=> 'required|integer|unique:doctores',
+            'correo'=> 'string|max:255|unique:doctores',
+            'clave'=> 'required|string|min:6|max:10',
             'celular'=> 'required|integer|min:10',
         ]);
 
@@ -29,11 +29,15 @@ class DoctoresController extends Controller
             return response()->json($validator->errors(),422);
         }
 
-        $doctores = Doctores::create($validator->validate());
+        $validatedData = $validator->validated();
+        $validatedData['clave'] = Hash::make($validatedData['clave']); // Encriptar la contraseña
+
+        $doctores = Doctores::create($validatedData);
 
         return response()->json($doctores,201);
     }
 
+    // ... El resto de tu código para show, update y destroy
     public function show(string $id){
         $doctores = Doctores::find($id);
         if (!$doctores) {
@@ -60,8 +64,13 @@ class DoctoresController extends Controller
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
+        
+        $validatedData = $validator->validated();
+        if (isset($validatedData['clave'])) {
+            $validatedData['clave'] = Hash::make($validatedData['clave']);
+        }
 
-        $doctores->update($validator->validated());
+        $doctores->update($validatedData);
 
         return response()->json($doctores);
     }

@@ -15,7 +15,7 @@ return [
 
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+        'passwords' => env('AUTH_PASSWORD_BROKER', 'doctores'),
     ],
 
     /*
@@ -38,7 +38,12 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'doctores',
+        ],
+
+        'api' => [
+            'driver' => 'jwt',
+            'provider' => 'doctores', 
         ],
     ],
 
@@ -60,15 +65,20 @@ return [
     */
 
     'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+        'doctores' => [
+             'driver' => 'eloquent',
+             'model' => App\Models\Doctores::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'pacientes' => [
+             'driver' => 'eloquent',
+             'model' => App\Models\Pacientes::class,
+        ],
+
+        'recepcionistas' => [
+             'driver' => 'eloquent',
+             'model' => App\Models\Recepcionista::class,
+        ],
     ],
 
     /*
@@ -91,8 +101,20 @@ return [
     */
 
     'passwords' => [
-        'users' => [
-            'provider' => 'users',
+        'doctores' => [
+            'provider' => 'doctores',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'pacientes' => [
+            'provider' => 'pacientes',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'recepcionistas' => [
+            'provider' => 'recepcionistas',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,

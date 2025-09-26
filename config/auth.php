@@ -36,16 +36,27 @@ return [
     */
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
-            'provider' => 'doctores',
-        ],
-
-        'api' => [
-            'driver' => 'jwt',
-            'provider' => 'doctores', 
-        ],
+    'web' => [
+        'driver' => 'session',
+        'provider' => 'doctores',
     ],
+
+    'doctor' => [
+        'driver' => 'jwt',
+        'provider' => 'doctores',
+    ],
+
+    'paciente' => [
+        'driver' => 'jwt',
+        'provider' => 'pacientes',
+    ],
+
+    'recepcionista' => [
+        'driver' => 'jwt',
+        'provider' => 'recepcionistas',
+    ],
+],
+
 
     /*
     |--------------------------------------------------------------------------

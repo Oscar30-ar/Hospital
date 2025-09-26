@@ -40,7 +40,7 @@ class CitasController extends Controller
         if (!$citas) {
             return response()->json(['message'=> 'Cita no encontrada'], 404);
         }
-        return response()->json($doctores);
+        return response()->json($citas);
     
     }
 

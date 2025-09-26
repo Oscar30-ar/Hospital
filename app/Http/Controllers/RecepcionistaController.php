@@ -15,7 +15,7 @@ class RecepcionistaController
         return response()->json($recepcionista);
     }
 
-    public function store(Request $request) {
+    public function registrarRecepcionista(Request $request) {
         $validator = Validator::make($request->all(),[
             'nombre'=>'required|string|max:255',
             'apellido'=> 'required|string|max:255',

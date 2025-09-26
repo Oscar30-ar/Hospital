@@ -15,7 +15,7 @@ class DoctoresController extends Controller
         return response()->json($doctores);
     }
 
-    public function store(Request $request){
+    public function registrarDoctor(Request $request){
         $validator = Validator::make($request->all(),[
             'nombre'=> 'required|string|max:255',
             'apellido'=> 'required|string|max:255',

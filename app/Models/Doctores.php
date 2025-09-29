@@ -17,14 +17,22 @@ class Doctores extends Authenticatable implements JWTSubject
         'celular',
     ];
 
-    public function especialidades(){
-        return $this->hasMany(Especialidades::class,'id_doctor');
+    public function especialidades()
+    {
+        return $this->belongsToMany(Especialidades::class, 'especialidades_doctores', 'id_doctor', 'id_especialidad');
     }
 
-    public function citas(){
+
+    public function citas()
+    {
         return $this->hasMany(Citas::class, 'id_doctor');
     }
-    
+    public function pacientes()
+    {
+        return $this->belongsToMany(Pacientes::class, 'citas', 'id_doctor', 'id_paciente')
+            ->withTimestamps();
+    }
+
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      *

@@ -3,11 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-
+use App\Models\Citas; 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 class Pacientes extends Authenticatable implements JWTSubject
 {
+     use HasApiTokens, HasFactory, Notifiable; 
     protected $fillable = [
         'nombre',
         'apellido',
@@ -22,8 +26,15 @@ class Pacientes extends Authenticatable implements JWTSubject
         'genero',
     ];
 
-    public function citas(){
-        return $this->hasMany(Citas::class, 'id_paciente');
+   public function citas()
+{
+    return $this->hasMany(\App\Models\Citas::class, 'id_paciente');
+}
+
+public function doctores()
+    {
+        return $this->belongsToMany(Doctores::class, 'citas', 'id_paciente', 'id_doctor')
+            ->withTimestamps();
     }
     
     /**

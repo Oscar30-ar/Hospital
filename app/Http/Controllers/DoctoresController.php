@@ -156,6 +156,9 @@ class DoctoresController extends Controller
     }
 
 
+    
+
+
 
 
 
@@ -523,7 +526,7 @@ class DoctoresController extends Controller
     }
 
     //Cambiar clave
-    public function changePassword(Request $request)
+    public function changePasswordMedico(Request $request)
     {
         try {
             $request->validate([

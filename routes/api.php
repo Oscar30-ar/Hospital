@@ -46,7 +46,7 @@ Route::middleware(['auth:doctor'])->group(function () {
     Route::get('doctor/citas', [DoctoresController::class, 'citasHoy']); //citas Hoy
     Route::put('/me/doctor', [DoctoresController::class, 'updateMedicoPerfil']); //editar perfil
     Route::delete('/eliminarCuenta', [DoctoresController::class, 'deleteAccount']); // Eliminar cuenta de doctor
-    Route::post('change-password', [DoctoresController::class, 'changePassword']); //cambiar clave
+    Route::post('/doctor/change-password', [DoctoresController::class, 'changePasswordMedico']); //cambiar clave
 
     // Route::get('buscarDoctorPorCedula/{documento}', [DoctoresController::class, 'buscarDoctorPorCedula']);
     // Route::get('listarDoctores', [DoctoresController::class, 'index']);

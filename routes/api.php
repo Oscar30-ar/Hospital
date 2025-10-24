@@ -51,9 +51,12 @@ Route::middleware(['auth:paciente'])->group(function () {
 Route::middleware(['auth:doctor'])->group(function () {
     Route::get('/me/doctor', [AuthController::class, 'meDoctor']); //perfil doctor
     Route::get('/doctor/estadisticas', [DoctoresController::class, 'estadisticas']); //estadiscas
-    Route::get('/doctor/pacientes', [DoctoresController::class, 'misPacientes']); //mis pacientes
+    Route::get('/doctor/mis-pacientes', [DoctoresController::class, 'misPacientes']); //mis pacientes
     Route::get('/doctor/pacientes/{pacienteId}/historial', [DoctoresController::class, 'historialPaciente']); //historial paciente
-    Route::get('doctor/citas', [DoctoresController::class, 'citasHoy']); //citas Hoy
+
+    Route::get('/doctor/citas/hoy', [DoctoresController::class, 'citasHoyDoctor']);
+    Route::put('/doctor/citas/{id}/realizada', [DoctoresController::class, 'marcarComoRealizada']);
+
     Route::put('/me/doctor', [DoctoresController::class, 'updateMedicoPerfil']); //editar perfil
     Route::delete('/eliminarCuenta', [DoctoresController::class, 'deleteAccount']); // Eliminar cuenta de doctor
 
@@ -118,7 +121,7 @@ Route::middleware(['auth:recepcionista'])->group(function () {
     Route::delete('/eliminarCuenta', [RecepcionistaController::class, 'deleteAccount']); // Eliminar cuenta de doctor
     Route::post('change-password', [RecepcionistaController::class, 'changePassword']); //cambiar clave
 
-    Route::post('/crearCita', [RecepcionistaController::class, 'storeCitaRecepcion']);//Agendar cita
+    Route::post('/crearCita', [RecepcionistaController::class, 'storeCitaRecepcion']); //Agendar cita
     Route::get('/disponibilidad/{id}', [CitasController::class, 'disponibilidad']); //verificar disponibilidad de doctor
     Route::get('/listarDoctores', [CitasController::class, 'listarDoctores']); //listar doctores con especialidades
 

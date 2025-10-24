@@ -11,6 +11,7 @@ use App\Models\Citas;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 
 class CitasController extends Controller
 {
@@ -436,4 +437,29 @@ class CitasController extends Controller
             ];
         }
     }
+
+public function confirmarCita($id)
+{
+    $cita = Citas::with('paciente')->findOrFail($id);
+    $cita->estado = 'confirmada';
+    $cita->save();
+
+    // ✅ Enviar notificación si el paciente tiene token
+    if ($cita->paciente && $cita->paciente->expo_token) {
+        $token = $cita->paciente->expo_token;
+
+        Http::post('https://exp.host/--/api/v2/push/send', [
+            'to' => $token,
+            'title' => '✅ Cita Confirmada',
+            'body' => "Tu cita con el Dr. {$cita->doctor->nombre} fue confirmada para el {$cita->fecha} a las {$cita->hora}.",
+            'sound' => 'default',
+        ]);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Cita confirmada y notificación enviada.',
+        'data' => $cita
+    ]);
+}
 }

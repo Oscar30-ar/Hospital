@@ -158,7 +158,7 @@ class PacientesController
             'celular' => 'sometimes|string|max:15',
             'fecha_nacimiento' => 'sometimes|date_format:Y-m-d',
             'ciudad' => 'sometimes|string|max:100',
-            'id_eps' => 'sometimes|integer|exists:eps,id', 
+            'id_eps' => 'sometimes|integer|exists:eps,id',
             'Rh' => 'sometimes|string|max:3',
             'genero' => 'sometimes|in:Masculino,Femenino',
         ]);
@@ -229,7 +229,7 @@ class PacientesController
     }
 
 
-        // Próximas citas confirmadas
+    // Próximas citas confirmadas
     public function ProximasCitasConfirmadas(Request $request)
     {
         $paciente = $request->user();
@@ -373,7 +373,8 @@ class PacientesController
     }
 
     //buscar paciente 
-    public function buscar(Request $request){
+    public function buscar(Request $request)
+    {
         $term = $request->input('q'); // el parámetro que llega desde el front
         Log::info('🔍 Búsqueda recibida:', ['term' => $term]);
         if (!$term) {
@@ -389,7 +390,7 @@ class PacientesController
         return response()->json(['success' => true, 'data' => $pacientes], 200);
     }
 
-        /**
+    /**
      * Actualizar el estado de una cita (confirmar o cancelar)
      */
     public function CancelarCita($id, Request $request)
@@ -417,5 +418,31 @@ class PacientesController
         }
     }
 
+    public function guardarTokenNotificacion(Request $request)
+    {
+        try {
+            $paciente = JWTAuth::parseToken()->authenticate();
 
+            if (!$paciente) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Paciente no autenticado.'
+                ], 401);
+            }
+
+            $paciente->expo_token = $request->token;
+            $paciente->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Token guardado correctamente.'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error("Error guardando token de notificación: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar el token.'
+            ], 500);
+        }
+    }
 }

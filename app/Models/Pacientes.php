@@ -24,6 +24,7 @@ class Pacientes extends Authenticatable implements JWTSubject
         'id_eps',
         'Rh',
         'genero',
+        'expo_token'
     ];
 
     public function citas()

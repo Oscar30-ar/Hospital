@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Doctores;
+
 class Citas extends Model
 {
     protected $fillable = [
@@ -17,14 +18,14 @@ class Citas extends Model
         'consultorio',
     ];
 
-    public function pacientes()
+    public function paciente()
     {
         return $this->belongsTo(Pacientes::class, 'id_paciente');
     }
+
 
     public function doctor()
     {
         return $this->belongsTo(Doctores::class, 'id_doctor');
     }
-    
 }

@@ -32,9 +32,10 @@ class Doctores extends Authenticatable implements JWTSubject
     public function pacientes()
     {
         return $this->belongsToMany(Pacientes::class, 'citas', 'id_doctor', 'id_paciente')
-            ->withTimestamps();
+            ->withTimestamps()->distinct();;
     }
 
+    
     public function consultorio(){
         return $this->belongsTo(Consultorio::class, 'id_consultorio');
     }

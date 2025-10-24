@@ -15,41 +15,50 @@ class PacientesController
 {
     public function index()
     {
-        $pacientes = Pacientes::all();
+        $pacientes = Pacientes::with('eps')->get();
         return response()->json($pacientes);
     }
 
     public function registrarPaciente(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nombre' => 'required|string|max:255',
-            'apellido' => 'required|string|max:255',
-            'documento' => 'required|integer|unique:pacientes',
-            'correo' => 'required|email|unique:pacientes',
-            'clave' => 'required|string|min:6|max:15',
-            'celular' => 'required|integer|min:10',
-            'fecha_nacimiento' => 'required|date',
-            'ciudad' => 'required|string|max:255',
-            'eps' => 'required|string|max:255',
-            'Rh' => 'required',
-            'genero' => 'required',
+            'nombre' => 'required|string|max:100',
+            'apellido' => 'required|string|max:100',
+            'documento' => 'required|numeric|unique:pacientes,documento',
+            'correo' => 'required|email|unique:pacientes,correo',
+            'clave' => 'required|string|min:6',
+            'celular' => 'required|string|max:15',
+            'fecha_nacimiento' => 'required|date_format:Y-m-d',
+            'ciudad' => 'required|string|max:100',
+            'id_eps' => 'required|integer|exists:eps,id',
+            'Rh' => 'required|string|max:3',
+            'genero' => 'required|in:Masculino,Femenino',
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         $validatedData = $validator->validated();
         $validatedData['clave'] = Hash::make($validatedData['clave']);
 
-        $pacientes = Pacientes::create($validatedData);
+        try {
+            $paciente = Pacientes::create($validatedData);
 
-        return response()->json($pacientes, 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Paciente registrado exitosamente.',
+                'data' => $paciente
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error("Error al registrar paciente: " . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error interno del servidor.'], 500);
+        }
     }
 
     public function show(string $id)
     {
-        $pacientes = Pacientes::find($id);
+        $pacientes = Pacientes::with('eps')->find($id);
         if (!$pacientes) {
             return response()->json(['message' => 'Pacientes no encontrado'], 404);
         }
@@ -123,9 +132,11 @@ class PacientesController
 
     public function me(Request $request)
     {
+        $user = $request->user();
+        $user->load('eps');
         return response()->json([
             "success" => true,
-            "user" => $request->user()
+            "user" => $user
         ]);
     }
 
@@ -138,32 +149,39 @@ class PacientesController
         if (!$pacientes) {
             return response()->json(['message' => 'Paciente no encontrado o no autenticado'], 404);
         }
+        // 🔹 Validación mejorada para la actualización del perfil
         $validator = Validator::make($request->all(), [
-            'nombre' => 'string|max:255',
-            'apellido' => 'string|max:255',
-            'documento' => 'integer|unique:pacientes,documento,' . $patientId,
-            'correo' => 'email|max:255|unique:pacientes,correo,' . $patientId,
-            'celular' => 'integer|min:10',
-            'fecha_nacimiento' => 'date',
-            'ciudad' => 'string|max:255',
-            'eps' => 'string|max:255',
-            'Rh' => 'string',
-            'genero' => 'string',
+            'nombre' => 'sometimes|string|max:100',
+            'apellido' => 'sometimes|string|max:100',
+            'documento' => 'sometimes|numeric|unique:pacientes,documento,' . $patientId,
+            'correo' => 'sometimes|email|max:255|unique:pacientes,correo,' . $patientId,
+            'celular' => 'sometimes|string|max:15',
+            'fecha_nacimiento' => 'sometimes|date_format:Y-m-d',
+            'ciudad' => 'sometimes|string|max:100',
+            'id_eps' => 'sometimes|integer|exists:eps,id', 
+            'Rh' => 'sometimes|string|max:3',
+            'genero' => 'sometimes|in:Masculino,Femenino',
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         $validatedData = $validator->validated();
 
+        // No se debe permitir cambiar la clave desde el perfil
         if (isset($validatedData['clave'])) {
             unset($validatedData['clave']);
         }
 
         $pacientes->update($validatedData);
 
-        return response()->json($pacientes);
+        // Devolver el paciente actualizado con su EPS
+        return response()->json([
+            'success' => true,
+            'message' => 'Perfil actualizado correctamente.',
+            'data' => $pacientes->load('eps')
+        ]);
     }
 
 
@@ -188,8 +206,31 @@ class PacientesController
         return response()->json($citasHistorial);
     }
 
-    // Próximas citas
-    public function ProximasCitas(Request $request)
+    // Próximas citas pendientes
+    public function ProximasCitasPendientes(Request $request)
+    {
+        $paciente = $request->user();
+
+        if (!$paciente) {
+            return response()->json(['message' => 'Paciente no autenticado'], 401);
+        }
+
+        $today = now()->toDateString();
+
+        $proximasCitas = $paciente->citas()
+            ->with('doctor')
+            ->whereDate('fecha', '>=', $today)
+            ->where('estado', 'pendiente')
+            ->orderBy('fecha', 'asc')
+            ->orderBy('hora', 'asc')
+            ->get();
+
+        return response()->json($proximasCitas);
+    }
+
+
+        // Próximas citas confirmadas
+    public function ProximasCitasConfirmadas(Request $request)
     {
         $paciente = $request->user();
 
@@ -316,7 +357,7 @@ class PacientesController
     //Buscar por cedula 
     public function buscarPorDocumento($documento)
     {
-        $paciente = \App\Models\Pacientes::where('documento', $documento)->first();
+        $paciente = \App\Models\Pacientes::with('eps')->where('documento', $documento)->first();
 
         if (!$paciente) {
             return response()->json([
@@ -332,18 +373,14 @@ class PacientesController
     }
 
     //buscar paciente 
-    public function buscar(Request $request)
-    
-    {
-        
-
+    public function buscar(Request $request){
         $term = $request->input('q'); // el parámetro que llega desde el front
         Log::info('🔍 Búsqueda recibida:', ['term' => $term]);
         if (!$term) {
             return response()->json(['success' => false, 'message' => 'Debe ingresar un término de búsqueda.'], 400);
         }
 
-        $pacientes = \App\Models\Pacientes::where('documento', 'LIKE', "%$term%")
+        $pacientes = \App\Models\Pacientes::with('eps')->where('documento', 'LIKE', "%$term%")
             ->orWhere('nombre', 'LIKE', "%$term%")
             ->orWhere('apellido', 'LIKE', "%$term%")
             ->limit(20) // para no traer toda la tabla
@@ -351,4 +388,34 @@ class PacientesController
 
         return response()->json(['success' => true, 'data' => $pacientes], 200);
     }
+
+        /**
+     * Actualizar el estado de una cita (confirmar o cancelar)
+     */
+    public function CancelarCita($id, Request $request)
+    {
+        $request->validate([
+            'estado' => 'required|in:,cancelada'
+        ]);
+
+        try {
+            $cita = \App\Models\Citas::findOrFail($id);
+            $cita->estado = $request->estado;
+            $cita->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Cita {$request->estado} correctamente.",
+                'data' => $cita
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("❌ Error actualizando estado de cita {$id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar la cita.'
+            ], 500);
+        }
+    }
+
+
 }

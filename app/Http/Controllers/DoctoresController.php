@@ -20,7 +20,7 @@ class DoctoresController extends Controller
 {
     public function index()
     {
-        $doctores = Doctores::with('especialidades')->get(); // 👈 carga relación
+        $doctores = Doctores::with(['especialidades', 'consultorio'])->get(); 
         return response()->json([
             'success' => true,
             'data' => $doctores
@@ -31,6 +31,22 @@ class DoctoresController extends Controller
     {
         $citas = Doctores::all();
         return response()->json($citas);
+    }
+
+        public function listardoctoress()
+    {
+        try {
+            $doctores = Doctores::select('id', 'nombre', 'apellido', 'especialidad')->get();
+            return response()->json([
+                'success' => true,
+                'data' => $doctores
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al listar doctores: ' . $th->getMessage()
+            ], 500);
+        }
     }
 
     public function registrarDoctor(Request $request)
@@ -56,6 +72,7 @@ class DoctoresController extends Controller
         return response()->json($doctores, 201);
     }
 
+    //Crear doctores
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -67,6 +84,7 @@ class DoctoresController extends Controller
             'clave' => 'required|string|min:6',
             'especialidades' => 'required|array',
             'especialidades.*' => 'exists:especialidades,id',
+            'id_consultorio' => 'required|integer|exists:consultorios,id',
         ]);
 
         $doctor = Doctores::create([
@@ -76,6 +94,8 @@ class DoctoresController extends Controller
             'correo' => $validated['correo'],
             'celular' => $validated['celular'],
             'clave' => bcrypt($validated['clave']),
+            'id_consultorio' => $validated['id_consultorio'],
+            
         ]);
 
         // 🔹 Asignar especialidades al doctor
@@ -94,7 +114,7 @@ class DoctoresController extends Controller
     // Obtener médico por ID
     public function listardoctores($id)
     {
-        $doctor = Doctores::with('especialidades')->find($id);
+        $doctor = Doctores::with(['especialidades', 'consultorio'])->find($id);
 
         if (!$doctor) {
             return response()->json([
@@ -105,8 +125,9 @@ class DoctoresController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $doctor->only(['id', 'nombre', 'apellido', 'documento', 'correo', 'celular']),
-            'especialidades' => $doctor->especialidades
+            'data' => $doctor->only(['id', 'nombre', 'apellido', 'documento', 'correo', 'celular', 'id_consultorio']),
+            'especialidades' => $doctor->especialidades,
+            'consultorio' => $doctor->consultorio
         ]);
     }
 
@@ -128,10 +149,11 @@ class DoctoresController extends Controller
             'documento' => 'required|string|max:20',
             'correo' => 'required|email|max:150',
             'celular' => 'required|string|max:15',
-            'especialidades' => 'array|required'
+            'especialidades' => 'array|required',
+            'id_consultorio' => 'sometimes|required|integer|exists:consultorios,id'
         ]);
 
-        $doctor->update($request->only(['nombre', 'apellido', 'documento', 'correo', 'celular']));
+        $doctor->update($request->only(['nombre', 'apellido', 'documento', 'correo', 'celular', 'id_consultorio']));
 
         // Actualizar especialidades (si es relación many-to-many)
         if ($request->has('especialidades')) {
@@ -362,7 +384,8 @@ class DoctoresController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $citasHoy
+            'data' => $citasHoy,
+            'id_consultorio' => $doctor->id_consultorio
         ]);
     }
 

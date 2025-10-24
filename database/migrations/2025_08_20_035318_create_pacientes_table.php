@@ -21,19 +21,19 @@ return new class extends Migration
             $table->string('celular');
             $table->date('fecha_nacimiento');
             $table->string('ciudad');
-            $table->string('eps');
+            $table->foreignId('id_eps')->constrained('eps')->onDelete('cascade');
             $table->enum('Rh', [
-            'A+',
-            'A-',
-            'B+',
-            'B-',
-            'AB+',
-            'AB-',
-            'O+',
-            'O-'
-        ])->nullable();
-            $table->enum('genero',['Masculino','Femenino']);
-            
+                'A+',
+                'A-',
+                'B+',
+                'B-',
+                'AB+',
+                'AB-',
+                'O+',
+                'O-'
+            ])->nullable();
+            $table->enum('genero', ['Masculino', 'Femenino']);
+
 
             $table->timestamps();
         });

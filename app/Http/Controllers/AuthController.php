@@ -82,10 +82,34 @@ class AuthController extends Controller
 
 
 
-    public function mePaciente()
-    {
-        return response()->json(auth('paciente')->user());
-    }
+   public function mePaciente()
+{
+    $pacienteAuth = auth('paciente')->user();
+
+    // Traer desde la base de datos con la relación EPS
+    $paciente = Pacientes::with('eps')->find($pacienteAuth->id);
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'id' => $paciente->id,
+            'nombre' => $paciente->nombre,
+            'apellido' => $paciente->apellido,
+            'documento' => $paciente->documento,
+            'correo' => $paciente->correo,
+            'celular' => $paciente->celular,
+            'ciudad' => $paciente->ciudad,
+            'fecha_nacimiento' => $paciente->fecha_nacimiento,
+            'Rh' => $paciente->Rh,
+            'genero' => $paciente->genero,
+            'eps' => [
+                'id' => $paciente->eps?->id,
+                'nombre' => $paciente->eps?->nombre,
+            ],
+        ],
+    ]);
+}
+
 
     public function meDoctor()
     {

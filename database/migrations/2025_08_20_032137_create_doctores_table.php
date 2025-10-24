@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('correo')->unique();
             $table->string('clave');
             $table->string('celular');
+            $table->foreignId('id_consultorio')->unique()->constrained('consultorios')->onDelete('cascade');
             $table->timestamps();
         });
     }

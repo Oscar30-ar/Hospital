@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -12,21 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('especialidades_doctores', function (Blueprint $table) {
+        Schema::create('consultorios', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_especialidad')->constrained('especialidades')->onDelete('cascade');
-            $table->foreignId('id_doctor')->constrained('doctores')->onDelete('cascade');
-            
+            $table->string("nombre")->unique();
             $table->timestamps();
         });
     }
-    
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('especialidades_doctores');
+        Schema::dropIfExists('consultorios');
     }
 };

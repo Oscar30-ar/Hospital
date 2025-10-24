@@ -9,44 +9,55 @@ use Illuminate\Support\Facades\Validator;
 
 class EspecialidadesController
 {
-    public function index() {
-    $especialidades = Especialidades::all();
-    return response()->json($especialidades);
-    }
-
-    public function store(Request $request) {
-    $validator = Validator::make($request->all(),[
-        'nombre'=> 'required|string|max:255',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json($validator->errors(),422);
-    }
-
-    $especialidades = Especialidades::create($validator->validate());
-
-    return response()->json($especialidades,201);
-    }
-
-    public function show(string $id) {
-        $especialidades = Especialidades::find($id);
-
-        if (!$especialidades) {
-            return response()->json(['message'=> 'Especialidad no encontrada'], 404);
-        }
-
+    //Listar todas las especialidades
+    public function index()
+    {
+        $especialidades = Especialidades::all();
         return response()->json($especialidades);
     }
 
-    public function update(Request $request, string $id) {
+    //Crear una nueva especialidad
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'nombre' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $especialidades = Especialidades::create($validator->validate());
+
+        return response()->json($especialidades, 201);
+    }
+
+    //Mostrar una especialidad por ID
+    public function show(string $id)
+    {
         $especialidades = Especialidades::find($id);
 
         if (!$especialidades) {
-            return response()->json(['message'=> 'Especialidad no encontrada'], 404);
+            return response()->json(['message' => 'Especialidad no encontrada'], 404);
         }
 
-        $validator = Validator::make($request->all(),[
-            'nombre'=>'string|max:250',
+        return response()->json([
+            'success' => true,
+            'data' => $especialidades->only(['id', 'nombre'])
+        ]);
+    }
+
+    //Actualizar una especialidad por ID
+    public function update(Request $request, string $id)
+    {
+        $especialidades = Especialidades::find($id);
+
+        if (!$especialidades) {
+            return response()->json(['message' => 'Especialidad no encontrada'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'nombre' => 'string|max:250',
         ]);
 
         if ($validator->fails()) {
@@ -58,7 +69,9 @@ class EspecialidadesController
         return response()->json($especialidades);
     }
 
-    public function destroy(string $id){
+    //Eliminar una especialidad por ID
+    public function destroy(string $id)
+    {
         $especialidades = Especialidades::find($id);
         if (!$especialidades) {
             return response()->json(['message' => "Especialid no encontrada"], 404);
@@ -67,4 +80,5 @@ class EspecialidadesController
         $especialidades->delete();
         return response()->json(['message' => "Especialid eliminada correctamente"]);
     }
+
 }

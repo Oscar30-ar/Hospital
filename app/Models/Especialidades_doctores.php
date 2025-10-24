@@ -12,7 +12,7 @@ class Especialidades_doctores extends Model
     ];
 
     public function especialidad_doctor(){
-        return $this->belongsTo(Especialidades_doctor::class,'id_');
+        return $this->belongsTo(Especialidades_doctores::class,'id_especialidad');
     }
 
     public function doctor(){

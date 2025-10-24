@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Models\Doctores;
+use App\Models\Horario_medicos;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Citas;
 use Carbon\Carbon;
@@ -11,11 +14,6 @@ use Illuminate\Support\Facades\Validator;
 
 class CitasController extends Controller
 {
-    public function index()
-    {
-        $citas = Citas::all();
-        return response()->json($citas);
-    }
 
     public function store(Request $request)
     {
@@ -50,53 +48,6 @@ class CitasController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error al crear la cita.', 'error' => $e->getMessage()], 500);
         }
-    }
-
-
-    public function show(string $id)
-    {
-        $citas = Citas::find($id);
-        if (!$citas) {
-            return response()->json(['message' => 'Cita no encontrada'], 404);
-        }
-        return response()->json($citas);
-    }
-
-    public function update(Request $request, string $id)
-    {
-        $citas = Citas::find($id);
-        if (!$citas) {
-            return response()->json(['message' => 'Cita no encontrada'], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'fecha' => 'date',
-            'hora' => 'string|max:255',
-            'descripcion' => 'string|max:255',
-            'consultorio' => 'string|max:255',
-            'estado' => 'in:pendiente,confirmada,cancelada',
-            'id_doctor' => 'integer',
-            'id_paciente' => 'integer',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        $citas->update($validator->validated());
-
-        return response()->json($citas);
-    }
-
-    public function destroy(string $id)
-    {
-        $citas = Citas::find($id);
-        if (!$citas) {
-            return response()->json(['message' => "Cita no encontrada"], 404);
-        }
-
-        $citas->delete();
-        return response()->json(['message' => "Cita eliminada correctamente"]);
     }
 
     public function totalCitas()
@@ -138,91 +89,59 @@ class CitasController extends Controller
         // Asegurar que devuelve solo los valores sin claves numéricas
         return response()->json(array_values($filteredSlots));
     }
-public function estadisticasRecepcion()
-{
-    try {
-        $today = Carbon::today()->format('Y-m-d'); // "2025-09-28"
-
-        $citasHoy = Citas::whereDate('fecha', $today)->count();
-        $enEspera = Citas::where('estado', 'pendiente')->count();
-        $confirmadas = Citas::where('estado', 'confirmada')->count();
-        $canceladas = Citas::where('estado', 'cancelada')->count();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'citasHoy' => $citasHoy,
-                'enEspera' => $enEspera,
-                'confirmadas' => $confirmadas,
-                'canceladas' => $canceladas,
-            ]
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error al obtener estadísticas.',
-            'error' => $e->getMessage()
-        ], 500);
-    }
-}
-
-
-//citas hoy 
-public function citasHoyRecepcion()
-{
-    $today = Carbon::now('America/Bogota')->format('Y-m-d');
-
-    $citas = Citas::with(['pacientes:id,nombre,apellido,celular', 'doctor:id,nombre,apellido'])
-        ->whereRaw('DATE(fecha) = ?', [$today])
-        ->orderBy('hora', 'asc')
-        ->get([
-            'id',
-            'fecha',
-            'hora',
-            'estado',
-            'consultorio',
-            'id_paciente',
-            'id_doctor'
-        ]);
-
-    return response()->json([
-        'success' => true,
-        'data' => $citas
-    ]);
-}
-
-//cambiar estado de cita 
- public function actualizarEstado($id, Request $request)
+    public function estadisticasRecepcion()
     {
-        $estado = $request->input('estado');
+        try {
+            $today = Carbon::today()->format('Y-m-d'); // "2025-09-28"
 
-        if (!$estado) {
+            $citasHoy = Citas::whereDate('fecha', $today)->count();
+            $enEspera = Citas::where('estado', 'pendiente')->count();
+            $confirmadas = Citas::where('estado', 'confirmada')->count();
+            $canceladas = Citas::where('estado', 'cancelada')->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'citasHoy' => $citasHoy,
+                    'enEspera' => $enEspera,
+                    'confirmadas' => $confirmadas,
+                    'canceladas' => $canceladas,
+                ]
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'El campo estado es obligatorio.'
-            ], 400);
+                'message' => 'Error al obtener estadísticas.',
+                'error' => $e->getMessage()
+            ], 500);
         }
+    }
 
-        $cita = Citas::find($id);
 
-        if (!$cita) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cita no encontrada.'
-            ], 404);
-        }
+    //citas hoy 
+    public function citasHoyRecepcion()
+    {
+        $today = Carbon::now('America/Bogota')->format('Y-m-d');
 
-        $cita->estado = $estado;
-        $cita->save();
+        $citas = Citas::with(['pacientes:id,nombre,apellido,celular', 'doctor:id,nombre,apellido'])
+            ->whereRaw('DATE(fecha) = ?', [$today])
+            ->orderBy('hora', 'asc')
+            ->get([
+                'id',
+                'fecha',
+                'hora',
+                'estado',
+                'id_paciente',
+                'id_doctor'
+            ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Estado de la cita actualizado correctamente.',
-            'data' => $cita
-        ], 200);
+            'data' => $citas
+        ]);
     }
 
-     public function citasHoy()
+    public function citasHoy()
     {
         try {
             $hoy = Carbon::now()->toDateString();
@@ -244,5 +163,277 @@ public function citasHoyRecepcion()
         }
     }
 
+    /**
+     * Listar todas las citas pendientes
+     */
+    public function citasPendientes()
+    {
+        try {
+            $citas = \App\Models\Citas::with(['pacientes', 'doctor'])
+                ->where('estado', 'pendiente')
+                ->orderBy('fecha', 'asc')
+                ->orderBy('hora', 'asc')
+                ->get();
 
+            return response()->json([
+                'success' => true,
+                'data' => $citas
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("❌ Error al obtener citas pendientes: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cargar las citas pendientes'
+            ], 500);
+        }
+    }
+
+    /**
+     * Actualizar el estado de una cita (confirmar o cancelar)
+     */
+    public function actualizarEstado($id, Request $request)
+    {
+        $request->validate([
+            'estado' => 'required|in:confirmada,cancelada'
+        ]);
+
+        try {
+            $cita = \App\Models\Citas::findOrFail($id);
+            $cita->estado = $request->estado;
+            $cita->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Cita {$request->estado} correctamente.",
+                'data' => $cita
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("❌ Error actualizando estado de cita {$id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar la cita.'
+            ], 500);
+        }
+    }
+
+
+
+
+
+    /**
+     * Listar todos los doctores
+     */
+    public function listarDoctores()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => Doctores::all(),
+        ]);
+    }
+
+    /**
+     * 🔹 Crear una cita como paciente autenticado
+     */
+    public function storePaciente(Request $request)
+    {
+        $request->validate([
+            'id_doctor' => 'required|exists:doctores,id',
+            'fecha' => 'required|date',
+            'hora' => 'required|date_format:H:i',
+            'descripcion' => 'nullable|string|max:255',
+        ]);
+
+        $paciente = Auth::guard('paciente')->user();
+
+        // 📆 🔸 Verificar si el paciente ya agendó una cita hoy (independiente de para qué fecha sea)
+        $hoy = \Carbon\Carbon::now('America/Bogota')->toDateString();
+
+        $yaCreoCitaHoy = \App\Models\Citas::where('id_paciente', $paciente->id)
+            ->whereDate('created_at', $hoy) // se compara por fecha de creación, no fecha de cita
+            ->exists();
+
+        if ($yaCreoCitaHoy) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ya has agendado una cita hoy. Solo puedes crear una cita por día.'
+            ], 400);
+        }
+
+
+        // ✅ Verificar disponibilidad del doctor
+        $verificacion = $this->verificarDisponibilidad($request->id_doctor, $request->fecha, $request->hora);
+        if (!$verificacion['disponible']) {
+            return response()->json([
+                'success' => false,
+                'message' => $verificacion['mensaje'] ?? 'El doctor no está disponible en ese horario.',
+            ], 400);
+        }
+
+        // ✅ Crear la cita
+        $cita = Citas::create([
+            'id_paciente' => $paciente->id,
+            'id_doctor' => $request->id_doctor,
+            'fecha' => $request->fecha,
+            'hora' => $request->hora,
+            'descripcion' => $request->descripcion ?? 'Cita solicitada por el paciente.',
+            'estado' => 'pendiente',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cita solicitada correctamente. Un recepcionista la confirmará pronto.',
+            'data' => $cita,
+        ], 201);
+    }
+
+    /**
+     * 🔹 Reprogramar una cita por parte del paciente
+     */
+    public function reprogramarCita(Request $request, $id)
+    {
+        // 1. Validar los datos de entrada
+        $validator = Validator::make($request->all(), [
+            'fecha' => 'required|date_format:Y-m-d|after_or_equal:today',
+            'hora' => 'required|date_format:H:i',
+        ], [
+            'fecha.after_or_equal' => 'La fecha no puede ser en el pasado.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $paciente = Auth::guard('paciente')->user();
+            $cita = Citas::findOrFail($id);
+
+            // 2. Verificar que la cita pertenece al paciente autenticado
+            if ($cita->id_paciente !== $paciente->id) {
+                return response()->json(['success' => false, 'message' => 'No tienes permiso para modificar esta cita.'], 403);
+            }
+
+            // 3. Verificar que la cita no esté cancelada o ya haya pasado
+            if ($cita->estado === 'cancelada' || Carbon::parse($cita->fecha . ' ' . $cita->hora)->isPast()) {
+                return response()->json(['success' => false, 'message' => 'Esta cita no se puede reprogramar.'], 400);
+            }
+
+            // 4. Verificar disponibilidad del doctor usando la lógica existente
+            $verificacion = $this->verificarDisponibilidad($cita->id_doctor, $request->fecha, $request->hora);
+            if (!$verificacion['disponible']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $verificacion['mensaje'] ?? 'El doctor no está disponible en el nuevo horario seleccionado.',
+                ], 409); // 409 Conflict
+            }
+
+            // 5. Actualizar la cita
+            $cita->fecha = $request->fecha;
+            $cita->hora = $request->hora;
+            // Opcional: Cambiar el estado a 'pendiente' para que una recepcionista re-confirme
+            $cita->estado = 'pendiente';
+            $cita->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cita reprogramada exitosamente. Queda pendiente de confirmación.',
+                'data' => $cita->load('doctor', 'pacientes'),
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'La cita no fue encontrada.'], 404);
+        } catch (\Exception $e) {
+            Log::error("❌ Error al reprogramar cita {$id}: " . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error interno al intentar reprogramar la cita.'], 500);
+        }
+    }
+
+    /**
+     * 🔹 Verificar disponibilidad API pública
+     */
+    public function disponibilidad($doctorId, Request $request)
+    {
+        $fecha = $request->query('fecha');
+        $hora = $request->query('hora');
+
+        $resultado = $this->verificarDisponibilidad($doctorId, $fecha, $hora);
+
+        return response()->json([
+            'success' => true,
+            'disponible' => $resultado['disponible'],
+            'mensaje' => $resultado['mensaje'],
+        ]);
+    }
+
+
+    /**
+     * 🔹 Lógica de verificación de disponibilidad del doctor
+     */
+    private function verificarDisponibilidad($doctorId, $fecha, $hora)
+    {
+        try {
+            if (!$fecha || !$hora) {
+                return [
+                    'disponible' => false,
+                    'mensaje' => 'Fecha u hora inválida.',
+                ];
+            }
+
+            Carbon::setLocale('es');
+            setlocale(LC_TIME, 'es_ES.UTF-8', 'es_ES', 'es', 'es_CO.UTF-8');
+
+            $fechaCarbon = Carbon::parse($fecha);
+            $horaFormateada = strlen($hora) === 5 ? $hora . ':00' : $hora;
+            $horaCarbon = Carbon::createFromFormat('H:i:s', $horaFormateada);
+
+            // Mapeo de días
+            $mapDias = [
+                'monday' => 'Lunes',
+                'tuesday' => 'Martes',
+                'wednesday' => 'Miercoles',
+                'thursday' => 'Jueves',
+                'friday' => 'Viernes',
+                'saturday' => 'Sábado',
+                'sunday' => 'Domingo',
+            ];
+
+            $diaSemanaIngles = strtolower($fechaCarbon->format('l'));
+            $diaSemana = $mapDias[$diaSemanaIngles] ?? ucfirst($diaSemanaIngles);
+
+            // Buscar horarios del doctor ese día
+            $horarios = Horario_medicos::where('id_doctor', $doctorId)
+                ->where('dia_semana', $diaSemana)
+                ->get();
+
+            if ($horarios->isEmpty()) {
+                return [
+                    'disponible' => false,
+                    'mensaje' => "El doctor no atiende los {$diaSemana}.",
+                ];
+            }
+
+            // Validar si la hora cae dentro de una franja
+            foreach ($horarios as $horario) {
+                $inicio = Carbon::createFromFormat('H:i:s', $horario->hora_inicio);
+                $fin = Carbon::createFromFormat('H:i:s', $horario->hora_fin);
+
+                if ($horaCarbon->between($inicio, $fin)) {
+                    return [
+                        'disponible' => true,
+                        'mensaje' => "El doctor está disponible el {$diaSemana} a las {$horaCarbon->format('H:i')}.",
+                    ];
+                }
+            }
+
+            return [
+                'disponible' => false,
+                'mensaje' => "El doctor no está disponible el {$diaSemana} a las {$horaCarbon->format('H:i')}.",
+            ];
+        } catch (\Throwable $e) {
+            Log::error("❌ Error verificando disponibilidad: " . $e->getMessage());
+            return [
+                'disponible' => false,
+                'mensaje' => 'Error interno al verificar disponibilidad.',
+            ];
+        }
+    }
 }

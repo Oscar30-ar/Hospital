@@ -21,15 +21,21 @@ class Pacientes extends Authenticatable implements JWTSubject
         'celular',
         'fecha_nacimiento',
         'ciudad',
-        'eps',
+        'id_eps',
         'Rh',
         'genero',
     ];
 
-   public function citas()
-{
-    return $this->hasMany(\App\Models\Citas::class, 'id_paciente');
-}
+    public function citas()
+    {
+        return $this->hasMany(\App\Models\Citas::class, 'id_paciente');
+    }
+
+
+    public function eps()
+    {
+        return $this->belongsTo(Eps::class, 'id_eps');
+    }
 
 public function doctores()
     {

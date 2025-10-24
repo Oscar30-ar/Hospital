@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -12,21 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('especialidades_doctores', function (Blueprint $table) {
+        Schema::create('horario_medicos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_especialidad')->constrained('especialidades')->onDelete('cascade');
             $table->foreignId('id_doctor')->constrained('doctores')->onDelete('cascade');
-            
+            $table->enum('dia_semana', ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])->index();
+            $table->time('hora_inicio');
+            $table->time('hora_fin');
             $table->timestamps();
         });
     }
-    
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('especialidades_doctores');
+        Schema::dropIfExists('horario_medicos');
     }
 };

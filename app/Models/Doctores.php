@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\HorarioMedicosController;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -15,6 +16,7 @@ class Doctores extends Authenticatable implements JWTSubject
         'correo',
         'clave',
         'celular',
+        'id_consultorio',
     ];
 
     public function especialidades()
@@ -33,6 +35,16 @@ class Doctores extends Authenticatable implements JWTSubject
             ->withTimestamps();
     }
 
+    public function consultorio(){
+        return $this->belongsTo(Consultorio::class, 'id_consultorio');
+    }
+
+    
+
+    public function horarios()
+    {
+        return $this->hasMany(HorarioMedicosController::class, 'id_doctor');
+    }
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      *

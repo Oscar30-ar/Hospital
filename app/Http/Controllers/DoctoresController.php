@@ -20,7 +20,7 @@ class DoctoresController extends Controller
 {
     public function index()
     {
-        $doctores = Doctores::with(['especialidades', 'consultorio'])->get(); 
+        $doctores = Doctores::with(['especialidades', 'consultorio'])->get();
         return response()->json([
             'success' => true,
             'data' => $doctores
@@ -33,7 +33,7 @@ class DoctoresController extends Controller
         return response()->json($citas);
     }
 
-        public function listardoctoress()
+    public function listardoctoress()
     {
         try {
             $doctores = Doctores::select('id', 'nombre', 'apellido', 'especialidad')->get();
@@ -95,7 +95,7 @@ class DoctoresController extends Controller
             'celular' => $validated['celular'],
             'clave' => bcrypt($validated['clave']),
             'id_consultorio' => $validated['id_consultorio'],
-            
+
         ]);
 
         // 🔹 Asignar especialidades al doctor
@@ -340,77 +340,8 @@ class DoctoresController extends Controller
 
     //citas hoy 
     public function citasHoy(Request $request)
-{
-    $doctor = $request->user();
-
-    if (!$doctor) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Doctor no autenticado.'
-        ], 401);
-    }
-
-    $today = \Carbon\Carbon::today()->toDateString();
-
-    $citasHoy = \App\Models\Citas::with([
-        'paciente:id,nombre,apellido,documento',
-        'doctor:id,nombre'
-    ])
-        ->where('id_doctor', $doctor->id)
-        ->whereDate('fecha', $today)
-        ->where('estado', 'confirmada')
-        ->orderBy('hora', 'asc')
-        ->get([
-            'id',
-            'fecha',
-            'hora',
-            'estado',
-            'id_paciente',
-            'id_doctor'
-        ]);
-
-    return response()->json([
-        'success' => true,
-        'data' => $citasHoy,
-        'id_consultorio' => $doctor->id_consultorio
-    ]);
-}
-
-
-    //Mis pacientes 
-    public function misPacientes(Request $request)
-{
-    $doctor = $request->user();
-
-    if (!$doctor) {
-        return response()->json(['success' => false, 'message' => 'Doctor no autenticado.'], 401);
-    }
-
-    try {
-        $pacientes = $doctor->pacientes()
-            ->selectRaw('DISTINCT pacientes.id, pacientes.nombre, pacientes.apellido, pacientes.documento, pacientes.celular, pacientes.correo')
-            ->orderBy('pacientes.apellido', 'asc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $pacientes,
-        ], 200);
-    } catch (\Exception $e) {
-        Log::error("Error en misPacientes: " . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Error interno al obtener la lista de pacientes.',
-        ], 500);
-    }
-}
-
-    //historial de paciente 
-
-    public function historialPaciente(Request $request, $pacienteId)
-{
-    try {
-        $doctor = JWTAuth::parseToken()->authenticate();
+    {
+        $doctor = $request->user();
 
         if (!$doctor) {
             return response()->json([
@@ -419,41 +350,109 @@ class DoctoresController extends Controller
             ], 401);
         }
 
-        // 📅 Obtener la fecha de hoy
-        $hoy = \Carbon\Carbon::now('America/Bogota')->toDateString();
+        $today = \Carbon\Carbon::today()->toDateString();
 
-        // 🔹 Citas anteriores a hoy
-        $citas = \App\Models\Citas::with([
-            'doctor:id,nombre,apellido',
-            'paciente:id,nombre,apellido,documento'
+        $citasHoy = \App\Models\Citas::with([
+            'paciente:id,nombre,apellido,documento',
+            'doctor:id,nombre'
         ])
             ->where('id_doctor', $doctor->id)
-            ->where('id_paciente', $pacienteId)
-            ->whereDate('fecha', '<', $hoy) // 👈 solo citas anteriores
-            ->orderBy('fecha', 'desc')
+            ->whereDate('fecha', $today)
+            ->where('estado', 'confirmada')
+            ->orderBy('hora', 'asc')
             ->get([
                 'id',
                 'fecha',
                 'hora',
-                'descripcion',
                 'estado',
-                'id_doctor',
-                'id_paciente'
+                'id_paciente',
+                'id_doctor'
             ]);
 
         return response()->json([
             'success' => true,
-            'data' => $citas
-        ], 200);
-
-    } catch (\Exception $e) {
-        Log::error("Error historial paciente {$pacienteId}: " . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Error al obtener historial del paciente.'
-        ], 500);
+            'data' => $citasHoy,
+            'id_consultorio' => $doctor->id_consultorio
+        ]);
     }
-}
+
+
+    //Mis pacientes 
+    public function misPacientes(Request $request)
+    {
+        $doctor = $request->user();
+
+        if (!$doctor) {
+            return response()->json(['success' => false, 'message' => 'Doctor no autenticado.'], 401);
+        }
+
+        try {
+            $pacientes = $doctor->pacientes()
+                ->selectRaw('DISTINCT pacientes.id, pacientes.nombre, pacientes.apellido, pacientes.documento, pacientes.celular, pacientes.correo')
+                ->orderBy('pacientes.apellido', 'asc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $pacientes,
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error("Error en misPacientes: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno al obtener la lista de pacientes.',
+            ], 500);
+        }
+    }
+
+    //historial de paciente 
+
+    public function historialPaciente(Request $request, $pacienteId)
+    {
+        try {
+            $doctor = JWTAuth::parseToken()->authenticate();
+
+            if (!$doctor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Doctor no autenticado.'
+                ], 401);
+            }
+
+            // 📅 Obtener la fecha de hoy
+            $hoy = \Carbon\Carbon::now('America/Bogota')->toDateString();
+
+            // 🔹 Citas anteriores a hoy
+            $citas = \App\Models\Citas::with([
+                'doctor:id,nombre,apellido',
+                'paciente:id,nombre,apellido,documento'
+            ])
+                ->where('id_doctor', $doctor->id)
+                ->where('id_paciente', $pacienteId)
+                ->whereDate('fecha', '<', $hoy) // 👈 solo citas anteriores
+                ->orderBy('fecha', 'desc')
+                ->get([
+                    'id',
+                    'fecha',
+                    'hora',
+                    'descripcion',
+                    'estado',
+                    'id_doctor',
+                    'id_paciente'
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $citas
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error("Error historial paciente {$pacienteId}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener historial del paciente.'
+            ], 500);
+        }
+    }
 
 
 
@@ -582,72 +581,72 @@ class DoctoresController extends Controller
         return response()->json($doctores);
     }
 
-            //citas hoy 
+    //citas hoy 
     public function citasHoyDoctor()
-{
-    try {
-        $doctor = auth('doctor')->user();
+    {
+        try {
+            $doctor = auth('doctor')->user();
 
-        if (!$doctor) {
+            if (!$doctor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No autorizado'
+                ], 401);
+            }
+
+            $hoy = \Carbon\Carbon::now('America/Bogota')->toDateString();
+
+            $citas = \App\Models\Citas::where('id_doctor', $doctor->id)
+                ->whereDate('fecha', $hoy)
+                ->where('estado', 'confirmada')
+                ->with(['paciente:id,nombre,apellido,documento'])
+                ->orderBy('hora', 'asc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $citas
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'No autorizado'
-            ], 401);
+                'message' => 'Error al obtener citas de hoy',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $hoy = \Carbon\Carbon::now('America/Bogota')->toDateString();
-
-        $citas = \App\Models\Citas::where('id_doctor', $doctor->id)
-            ->whereDate('fecha', $hoy)
-            ->where('estado','confirmada')
-            ->with(['paciente:id,nombre,apellido,documento'])
-            ->orderBy('hora', 'asc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $citas
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error al obtener citas de hoy',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
-//marcar como realizada
+    //marcar como realizada
 
-public function marcarComoRealizada($id)
-{
-    try {
-        $doctor = auth('doctor')->user();
+    public function marcarComoRealizada($id)
+    {
+        try {
+            $doctor = auth('doctor')->user();
 
-        $cita = \App\Models\Citas::where('id', $id)
-            ->where('id_doctor', $doctor->id)
-            ->first();
+            $cita = \App\Models\Citas::where('id', $id)
+                ->where('id_doctor', $doctor->id)
+                ->first();
 
-        if (!$cita) {
+            if (!$cita) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cita no encontrada o no pertenece a este doctor'
+                ], 404);
+            }
+
+            $cita->estado = 'realizada';
+            $cita->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cita marcada como realizada exitosamente'
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cita no encontrada o no pertenece a este doctor'
-            ], 404);
+                'message' => 'Error al actualizar la cita',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $cita->estado = 'realizada';
-        $cita->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Cita marcada como realizada exitosamente'
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error al actualizar la cita',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 }

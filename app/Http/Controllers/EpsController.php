@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class EpsController extends Controller
 {
-     //listar Eps
+    //listar Eps
     public function listarEps()
     {
         $eps = Eps::all();
@@ -42,15 +42,15 @@ class EpsController extends Controller
                 'message' => 'EPS creada exitosamente.',
                 'data' => $eps
             ], 201);
-
         } catch (\Exception $e) {
             Log::error("Error al crear la EPS: " . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error interno del servidor.'], 500);
         }
     }
 
-        //obtener una eps por id
-    public function EpsByID($id){
+    //obtener una eps por id
+    public function EpsByID($id)
+    {
         $eps = Eps::find($id);
         if (!$eps) {
             return response()->json(['message' => 'Eps no encontrada'], 404);
@@ -63,8 +63,9 @@ class EpsController extends Controller
     }
 
     //Editar Eps
-    public function update(Request $request, string $id){
-         $eps = Eps::find($id);
+    public function update(Request $request, string $id)
+    {
+        $eps = Eps::find($id);
 
         if (!$eps) {
             return response()->json(['message' => 'Eps no encontrada'], 404);
@@ -83,8 +84,8 @@ class EpsController extends Controller
         return response()->json($eps);
     }
 
-        //Eliminar eps
-        public function destroy(string $id)
+    //Eliminar eps
+    public function destroy(string $id)
     {
         $eps = Eps::find($id);
         if (!$eps) {
@@ -94,5 +95,4 @@ class EpsController extends Controller
         $eps->delete();
         return response()->json(['message' => "Eps eliminada correctamente"]);
     }
-
 }

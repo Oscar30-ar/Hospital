@@ -80,5 +80,4 @@ class EspecialidadesController
         $especialidades->delete();
         return response()->json(['message' => "Especialid eliminada correctamente"]);
     }
-
 }

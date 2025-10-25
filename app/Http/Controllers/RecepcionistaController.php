@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Http;
+
+
 
 class RecepcionistaController
 {
@@ -221,7 +224,7 @@ class RecepcionistaController
         ], 200);
     }
 
-        /**
+    /**
      * Verificar disponibilidad del doctor vía API
      */
     public function disponibilidad($doctorId, Request $request)
@@ -311,7 +314,7 @@ class RecepcionistaController
         }
     }
 
-     public function storeCitaRecepcion(Request $request)
+    public function storeCitaRecepcion(Request $request)
     {
         $validated = $request->validate([
             'id_paciente' => 'required|exists:pacientes,id',

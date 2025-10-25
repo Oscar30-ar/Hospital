@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 class HorarioMedicosController extends Controller
 {
     //listar horario del doctor autenticado
-     public function listarHorarios()
+    public function listarHorarios()
     {
         $doctor = Auth::guard('doctor')->user();
 
@@ -25,6 +25,7 @@ class HorarioMedicosController extends Controller
             'data' => $horarios
         ]);
     }
+
     //agregar horario 
     public function store(Request $request)
     {
@@ -46,7 +47,7 @@ class HorarioMedicosController extends Controller
             ->where(function ($q) use ($request) {
                 $q->where(function ($q2) use ($request) {
                     $q2->where('hora_inicio', '<', $request->hora_fin)
-                       ->where('hora_fin', '>', $request->hora_inicio);
+                        ->where('hora_fin', '>', $request->hora_inicio);
                 });
             })
             ->exists();
@@ -71,7 +72,6 @@ class HorarioMedicosController extends Controller
             'data' => $horario
         ], 201);
     }
-
 
     //Editar horario
     public function update(Request $request, $id)
@@ -105,7 +105,6 @@ class HorarioMedicosController extends Controller
     }
 
     // Eliminar horario
-
     public function destroy($id)
     {
         $doctor = Auth::guard('doctor')->user();
@@ -126,5 +125,4 @@ class HorarioMedicosController extends Controller
             'message' => 'Horario eliminado correctamente.'
         ]);
     }
-
 }

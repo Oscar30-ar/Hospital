@@ -170,7 +170,7 @@ class CitasController extends Controller
     public function citasPendientes()
     {
         try {
-            $citas = \App\Models\Citas::with(['pacientes', 'doctor'])
+            $citas = \App\Models\Citas::with(['paciente', 'doctor'])
                 ->where('estado', 'pendiente')
                 ->orderBy('fecha', 'asc')
                 ->orderBy('hora', 'asc')
@@ -188,37 +188,6 @@ class CitasController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * Actualizar el estado de una cita (confirmar o cancelar)
-     */
-    public function actualizarEstado($id, Request $request)
-    {
-        $request->validate([
-            'estado' => 'required|in:confirmada,cancelada'
-        ]);
-
-        try {
-            $cita = \App\Models\Citas::findOrFail($id);
-            $cita->estado = $request->estado;
-            $cita->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => "Cita {$request->estado} correctamente.",
-                'data' => $cita
-            ]);
-        } catch (\Throwable $e) {
-            Log::error("❌ Error actualizando estado de cita {$id}: " . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar la cita.'
-            ], 500);
-        }
-    }
-
-
-
 
 
     /**
@@ -339,7 +308,6 @@ class CitasController extends Controller
                 'message' => 'Cita reprogramada exitosamente. Queda pendiente de confirmación.',
                 'data' => $cita->load('doctor', 'pacientes'),
             ], 200);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['success' => false, 'message' => 'La cita no fue encontrada.'], 404);
         } catch (\Exception $e) {
@@ -438,28 +406,77 @@ class CitasController extends Controller
         }
     }
 
-public function confirmarCita($id)
-{
-    $cita = Citas::with('paciente')->findOrFail($id);
-    $cita->estado = 'confirmada';
-    $cita->save();
+    public function actualizarEstado(Request $request, $id)
+    {
+        $cita = Citas::find($id);
 
-    // ✅ Enviar notificación si el paciente tiene token
-    if ($cita->paciente && $cita->paciente->expo_token) {
-        $token = $cita->paciente->expo_token;
+        if (!$cita) {
+            return response()->json(['success' => false, 'message' => 'Cita no encontrada.'], 404);
+        }
 
-        Http::post('https://exp.host/--/api/v2/push/send', [
-            'to' => $token,
-            'title' => '✅ Cita Confirmada',
-            'body' => "Tu cita con el Dr. {$cita->doctor->nombre} fue confirmada para el {$cita->fecha} a las {$cita->hora}.",
-            'sound' => 'default',
-        ]);
+        $nuevoEstado = $request->estado;
+        $cita->estado = $nuevoEstado;
+        $cita->save();
+
+        // ✅ Enviar notificación al paciente
+        $paciente = $cita->paciente;
+        if ($paciente && $paciente->expo_token) {
+            $titulo = "Actualización de tu cita médica";
+            $mensaje = match ($nuevoEstado) {
+                'confirmada' => "Tu cita fue CONFIRMADA ✅. Te esperamos el {$cita->fecha} a las {$cita->hora}.",
+                'cancelada' => "Tu cita fue CANCELADA ❌. Por favor agenda una nueva si lo deseas.",
+                default => "Tu cita cambió de estado a: {$nuevoEstado}.",
+            };
+
+            \App\Helpers\NotificacionHelper::enviarNotificacion($paciente->expo_token, $titulo, $mensaje);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Estado actualizado correctamente.']);
     }
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Cita confirmada y notificación enviada.',
-        'data' => $cita
-    ]);
-}
+    private function enviarNotificacionExpo($token, $titulo, $mensaje)
+    {
+        try {
+            $response = Http::post('https://exp.host/--/api/v2/push/send', [
+                'to' => $token,
+                'sound' => 'default',
+                'title' => $titulo,
+                'body' => $mensaje,
+            ]);
+
+            Log::info('📲 Notificación enviada', [
+                'token' => $token,
+                'response' => $response->json(),
+            ]);
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('❌ Error al enviar notificación: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function verificarCambioEstado()
+    {
+        // Buscar citas confirmadas hoy (puedes ajustar la condición)
+        $citas = Citas::with('paciente')
+            ->where('estado', 'Confirmada')
+            ->whereDate('updated_at', now()->toDateString())
+            ->get();
+
+        foreach ($citas as $cita) {
+            if ($cita->paciente && $cita->paciente->expo_token) {
+                $this->enviarNotificacionExpo(
+                    $cita->paciente->expo_token,
+                    '✅ Cita Confirmada',
+                    'Tu cita del ' . $cita->fecha . ' ha sido confirmada.'
+                );
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notificaciones enviadas a pacientes con citas confirmadas.',
+        ]);
+    }
 }

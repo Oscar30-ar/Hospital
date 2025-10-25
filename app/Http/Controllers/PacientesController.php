@@ -18,7 +18,7 @@ class PacientesController
         $pacientes = Pacientes::with('eps')->get();
         return response()->json($pacientes);
     }
-
+    //Registrar paciente
     public function registrarPaciente(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -56,6 +56,7 @@ class PacientesController
         }
     }
 
+    //obtener paciente por id
     public function show(string $id)
     {
         $pacientes = Pacientes::with('eps')->find($id);
@@ -65,6 +66,7 @@ class PacientesController
         return response()->json($pacientes);
     }
 
+    //Editar paciente
     public function update(Request $request, string $id)
     {
         $pacientes = Pacientes::find($id);
@@ -100,6 +102,7 @@ class PacientesController
         return response()->json($pacientes);
     }
 
+    //Eliminar paciente
     public function destroy(string $id)
     {
         $pacientes = Pacientes::find($id);
@@ -112,12 +115,14 @@ class PacientesController
         return response()->json(['message' => "Paciente eliminado correctamente"]);
     }
 
+    //listar hombre
     public function listarHombres()
     {
         $mujeres = Pacientes::where('genero', 'Masculino')->get();
         return response()->json($mujeres);
     }
 
+    //listar citas  de un paciente
     public function listarCitasDePaciente($id)
     {
         $pacientes = Pacientes::find($id);
@@ -130,6 +135,7 @@ class PacientesController
         return response()->json($citas);
     }
 
+    //perfil del paciente autenticado
     public function me(Request $request)
     {
         $user = $request->user();
@@ -184,7 +190,6 @@ class PacientesController
         ]);
     }
 
-
     //Historial medico
     public function HistorialCitas(Request $request)
     {
@@ -228,7 +233,6 @@ class PacientesController
         return response()->json($proximasCitas);
     }
 
-
     // Próximas citas confirmadas
     public function ProximasCitasConfirmadas(Request $request)
     {
@@ -250,7 +254,6 @@ class PacientesController
 
         return response()->json($proximasCitas);
     }
-
 
     //Cambiar clave
     public function changePassword(Request $request)
@@ -289,9 +292,7 @@ class PacientesController
         ], 200);
     }
 
-
     //Eliminar cuenta /**
-
     public function deleteAccount(Request $request)
     {
         // Obtener el paciente autenticado a través del token
@@ -333,6 +334,7 @@ class PacientesController
         }
     }
 
+    //Buscar Paciente
     public function search(Request $request)
     {
         $query = $request->query('q');
@@ -352,7 +354,6 @@ class PacientesController
             'data' => $pacientes
         ]);
     }
-
 
     //Buscar por cedula 
     public function buscarPorDocumento($documento)
@@ -390,9 +391,7 @@ class PacientesController
         return response()->json(['success' => true, 'data' => $pacientes], 200);
     }
 
-    /**
-     * Actualizar el estado de una cita (confirmar o cancelar)
-     */
+    //Actualizar el estado de una cita (confirmar o cancelar)
     public function CancelarCita($id, Request $request)
     {
         $request->validate([
@@ -418,6 +417,7 @@ class PacientesController
         }
     }
 
+    //Guardar token de notificación
     public function guardarTokenNotificacion(Request $request)
     {
         try {

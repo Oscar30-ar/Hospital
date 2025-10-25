@@ -51,21 +51,20 @@ class ConsultorioController extends Controller
         ], [
             'nombre.unique' => 'Ya existe un consultorio con este nombre.',
         ]);
- 
+
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
- 
+
         try {
             $consultorio = Consultorio::create($validator->validated());
- 
+
             // Respuesta JSON estandarizada y más descriptiva
             return response()->json([
                 'success' => true,
                 'message' => 'Consultorio creado exitosamente.',
                 'data' => $consultorio
             ], 201);
- 
         } catch (\Exception $e) {
             Log::error("Error al crear el consultorio: " . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error interno del servidor.'], 500);
@@ -73,8 +72,9 @@ class ConsultorioController extends Controller
     }
 
     //Editar consultorio
-    public function update(Request $request, string $id){
-         $consultorio = Consultorio::find($id);
+    public function update(Request $request, string $id)
+    {
+        $consultorio = Consultorio::find($id);
 
         if (!$consultorio) {
             return response()->json(['message' => 'Consultorio no encontrado'], 404);
@@ -94,7 +94,8 @@ class ConsultorioController extends Controller
     }
 
     //obtener un consultorio por id
-    public function consultorioByID($id){
+    public function consultorioByID($id)
+    {
         $consultorio = Consultorio::find($id);
         if (!$consultorio) {
             return response()->json(['message' => 'Consultorio no encontrado'], 404);
@@ -107,7 +108,7 @@ class ConsultorioController extends Controller
     }
 
     //Eliminar consultorio
-        public function destroy(string $id)
+    public function destroy(string $id)
     {
         $consultorio = Consultorio::find($id);
         if (!$consultorio) {

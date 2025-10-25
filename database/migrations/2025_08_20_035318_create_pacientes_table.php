@@ -33,6 +33,7 @@ return new class extends Migration
                 'O-'
             ])->nullable();
             $table->enum('genero', ['Masculino', 'Femenino']);
+            $table->string('expo_token')->nullable();
 
 
             $table->timestamps();

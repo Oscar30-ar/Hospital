@@ -78,9 +78,9 @@ class DoctoresController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'apellido' => 'required|string|max:255',
-            'documento' => 'required|numeric|unique:doctores,documento',
+            'documento' => 'required|numeric|unique:doctores,documento|min:10|max:15',
             'correo' => 'required|email|unique:doctores,correo',
-            'celular' => 'required|string|max:15',
+            'celular' => 'required|string|min:10|max:15',
             'clave' => 'required|string|min:6',
             'especialidades' => 'required|array',
             'especialidades.*' => 'exists:especialidades,id',

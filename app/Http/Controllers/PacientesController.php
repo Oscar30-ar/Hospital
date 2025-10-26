@@ -203,13 +203,18 @@ class PacientesController
 
         $citasHistorial = $paciente->citas()
             ->with('doctor')
-            ->whereDate('fecha', '<', $today)
+            ->whereDate('fecha', '<=', $today)
+            ->whereIn('estado', ['confirmada', 'realizada']) 
             ->orderBy('fecha', 'desc')
             ->orderBy('hora', 'desc')
             ->get();
 
-        return response()->json($citasHistorial);
+        return response()->json([
+            "success" => true,
+            "data" => $citasHistorial
+        ]);
     }
+
 
     // Próximas citas pendientes
     public function ProximasCitasPendientes(Request $request)

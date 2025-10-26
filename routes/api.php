@@ -17,7 +17,7 @@ Route::post('/login', [AuthController::class, 'login']); //login
 Route::post('/logout', [AuthController::class, 'logout']); //Logout
 
 // REGISTROS
-Route::post('registrarDoctor', [DoctoresController::class, 'registrarDoctor']); //registro doctor
+Route::post('/registrarDoctor', [DoctoresController::class, 'registrarDoctor']); //registro doctor
 Route::post('registrarPaciente', [PacientesController::class, 'registrarPaciente']); //registro paciente
 Route::get('/listarEpsPublico', [EpsController::class, 'listarEps']); //listar eps
 
@@ -35,7 +35,7 @@ Route::middleware(['auth:paciente'])->group(function () {
     Route::get('/citas/proximas/pendientes', [PacientesController::class, 'ProximasCitasPendientes']); //proximas citasRoute
     Route::get('/citas/proximas/confirmadas', [PacientesController::class, 'ProximasCitasConfirmadas']); //proximas citasRoute
     Route::put('/paciente/citas/{id}/estado', [PacientesController::class, 'CancelarCita']); //eliminar cuenta
-    Route::put('/paciente/citas/{id}/reprogramar', [CitasController::class, 'reprogramarCita']); // ✅ NUEVO: Reprogramar cita
+    Route::put('/paciente/citas/{id}/reprogramar', [CitasController::class, 'reprogramarCita']); // Reprogramar cita
 
     Route::get('contarPacientes', [PacientesController::class, 'contarPacientes']); //contar pacientes
     Route::post('/paciente/change-password', [PacientesController::class, 'changePassword']); //cambiar clave

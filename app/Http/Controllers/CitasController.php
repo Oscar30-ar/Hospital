@@ -411,7 +411,7 @@ class CitasController extends Controller
         }
     }
 
-    public function actualizarEstado(Request $request, $id)
+    public function actualizarEstadoCita(Request $request, $id)
     {
         $cita = Citas::find($id);
 
@@ -467,7 +467,7 @@ class CitasController extends Controller
     {
         // Buscar citas confirmadas hoy (puedes ajustar la condición)
         $citas = Citas::with('paciente')
-            ->where('estado', 'Confirmada')
+            ->where('estado', 'confirmada')
             ->whereDate('updated_at', now()->toDateString())
             ->get();
 

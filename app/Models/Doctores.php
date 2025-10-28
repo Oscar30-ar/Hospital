@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Http\Controllers\HorarioMedicosController;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Tymon\JWTAuth\Contracts\JWTSubject;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 class Doctores extends Authenticatable implements JWTSubject
 {

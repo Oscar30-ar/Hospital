@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\ResetPasswordMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use App\Models\Doctores;
 use App\Models\Pacientes;
 use App\Models\Recepcionista;
@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -44,7 +45,8 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $token = auth($role)->login($user);
+        Auth::shouldUse($role);
+        $token = JWTAuth::fromUser($user);
 
         return response()->json([
             'success' => true,
@@ -62,10 +64,11 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $role = $request->get('role');
-        $user = auth($role)->user();
+        Auth::shouldUse($role);
+        $user = JWTAuth::parseToken()->authenticate();
 
         if ($user) {
-            auth($role)->logout();
+            JWTAuth::parseToken()->invalidate(true);
             return response()->json([
                 'success' => true,
                 'message' => $user->nombre . ' ha cerrado sesión correctamente'

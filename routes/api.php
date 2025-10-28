@@ -12,26 +12,27 @@ use App\Http\Controllers\PacientesController;
 use Illuminate\Support\Facades\Route;
 use App\Helpers\FirebaseHelper;
 
-Route::post('/test-notificacion', function (Illuminate\Http\Request $request) {
-    $request->validate([
-        'token' => 'required|string',
-        'titulo' => 'required|string',
-        'mensaje' => 'required|string',
-    ]);
+// //Probar notificacion 
+// Route::post('/notificacion', function (Illuminate\Http\Request $request) {
+//     $request->validate([
+//         'token' => 'required|string',
+//         'titulo' => 'required|string',
+//         'mensaje' => 'required|string',
+//     ]);
 
-    $ok = FirebaseHelper::enviarNotificacion(
-        $request->token,
-        $request->titulo,
-        $request->mensaje
-    );
+//     $ok = FirebaseHelper::enviarNotificacion(
+//         $request->token,
+//         $request->titulo,
+//         $request->mensaje
+//     );
 
-    return response()->json([
-        'success' => $ok,
-        'message' => $ok
-            ? '✅ Notificación enviada correctamente.'
-            : '❌ Falló el envío de la notificación.',
-    ]);
-});
+//     return response()->json([
+//         'success' => $ok,
+//         'message' => $ok
+//             ? '✅ Notificación enviada correctamente.'
+//             : '❌ Falló el envío de la notificación.',
+//     ]);
+// });
 
 
 // AUTENTICACIÓN GENERAL
@@ -105,7 +106,7 @@ Route::middleware(['auth:recepcionista'])->group(function () {
     Route::get('/pacientes/buscar', [PacientesController::class, 'buscar']); //buscar pacientes por nombre o documento
     Route::get('/recepcion/estadisticas', [CitasController::class, 'estadisticasRecepcion']); //estadisticas dashboard recepcion
     Route::get('/citas-hoy-recepcion', [CitasController::class, 'citasHoyRecepcion']); //citas de hoy para recepcionista
-    Route::put('/citas/{id}/estado', [CitasController::class, 'actualizarEstado']); //actualizar estado de la cita
+    Route::put('/citas/{id}/estado', [CitasController::class, 'actualizarEstadoCita']); //actualizar estado de la cita
     Route::get('/citas/hoy', [CitasController::class, 'citasHoyRecepcion']); //citas de hoy
 
 
@@ -138,7 +139,6 @@ Route::middleware(['auth:recepcionista'])->group(function () {
     Route::delete('/EliminarEps/{id}', [EpsController::class, 'destroy']); // Eliminar eps
 
     Route::get('/citas/pendientes', [CitasController::class, 'citasPendientes']);
-    Route::put('/citas/{id}/estado', [CitasController::class, 'actualccizarEstado']);
 
     Route::put('/doctores/{id}', [DoctoresController::class, 'update']); //Actualizar doctor
     Route::delete('/doctores/{id}', [DoctoresController::class, 'destroy']); //Eliminar doctor

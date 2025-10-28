@@ -10,6 +10,28 @@ use App\Http\Controllers\EpsController;
 use App\Http\Controllers\HorarioMedicosController;
 use App\Http\Controllers\PacientesController;
 use Illuminate\Support\Facades\Route;
+use App\Helpers\FirebaseHelper;
+
+Route::post('/test-notificacion', function (Illuminate\Http\Request $request) {
+    $request->validate([
+        'token' => 'required|string',
+        'titulo' => 'required|string',
+        'mensaje' => 'required|string',
+    ]);
+
+    $ok = FirebaseHelper::enviarNotificacion(
+        $request->token,
+        $request->titulo,
+        $request->mensaje
+    );
+
+    return response()->json([
+        'success' => $ok,
+        'message' => $ok
+            ? '✅ Notificación enviada correctamente.'
+            : '❌ Falló el envío de la notificación.',
+    ]);
+});
 
 
 // AUTENTICACIÓN GENERAL
@@ -116,7 +138,7 @@ Route::middleware(['auth:recepcionista'])->group(function () {
     Route::delete('/EliminarEps/{id}', [EpsController::class, 'destroy']); // Eliminar eps
 
     Route::get('/citas/pendientes', [CitasController::class, 'citasPendientes']);
-    Route::put('/citas/{id}/estado', [CitasController::class, 'actualizarEstado']);
+    Route::put('/citas/{id}/estado', [CitasController::class, 'actualccizarEstado']);
 
     Route::put('/doctores/{id}', [DoctoresController::class, 'update']); //Actualizar doctor
     Route::delete('/doctores/{id}', [DoctoresController::class, 'destroy']); //Eliminar doctor

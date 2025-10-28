@@ -106,22 +106,37 @@ return [
         ),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Maintenance Mode Driver
-    |--------------------------------------------------------------------------
-    |
-    | These configuration options determine the driver used to determine and
-    | manage Laravel's "maintenance mode" status. The "cache" driver will
-    | allow maintenance mode to be controlled across multiple machines.
-    |
-    | Supported drivers: "file", "cache"
-    |
-    */
 
-    'maintenance' => [
-        'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
-        'store' => env('APP_MAINTENANCE_STORE', 'database'),
+    'providers' => [
+
+        /*
+     * Laravel Framework Service Providers...
+     */
+        Illuminate\Auth\AuthServiceProvider::class,
+        Illuminate\Broadcasting\BroadcastServiceProvider::class,
+        Illuminate\Bus\BusServiceProvider::class,
+        Illuminate\Cache\CacheServiceProvider::class,
+        Illuminate\Database\DatabaseServiceProvider::class,     // ✅ agrega esta línea
+        Illuminate\Encryption\EncryptionServiceProvider::class,
+        Illuminate\Filesystem\FilesystemServiceProvider::class,  // ✅ agrega esta línea
+        Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
+        Illuminate\Hashing\HashServiceProvider::class,
+        Illuminate\Mail\MailServiceProvider::class,
+        Illuminate\Notifications\NotificationServiceProvider::class,
+        Illuminate\Pagination\PaginationServiceProvider::class,
+        Illuminate\Session\SessionServiceProvider::class,
+        Illuminate\View\ViewServiceProvider::class,
+
+        /*
+     * Package Service Providers...
+     */
+        PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider::class, // ✅ JWT actualizado
+
+        /*
+     * Application Service Providers...
+     */
+        App\Providers\AppServiceProvider::class,
     ],
+
 
 ];

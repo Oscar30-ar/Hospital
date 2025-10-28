@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use App\Helpers\FirebaseHelper;
 
 class CitasController extends Controller
 {
@@ -260,65 +261,64 @@ class CitasController extends Controller
      * 🔹 Reprogramar una cita por parte del paciente
      */
     public function reprogramarCita(Request $request, $id)
-{
-    // ✅ Corregir formato de hora ANTES del validator
-    if ($request->hora && strlen($request->hora) === 5) {
-        $request->merge(['hora' => $request->hora . ':00']);
-    }
-
-    // ✅ Validar una sola vez con formato correcto
-    $validator = Validator::make($request->all(), [
-        'fecha' => 'required|date_format:Y-m-d|after_or_equal:today',
-        'hora' => 'required|date_format:H:i:s',
-    ], [
-        'fecha.after_or_equal' => 'La fecha no puede ser en el pasado.',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    try {
-        $paciente = Auth::guard('paciente')->user();
-        $cita = Citas::findOrFail($id);
-
-        if ($cita->id_paciente !== $paciente->id) {
-            return response()->json(['success' => false, 'message' => 'No tienes permiso para modificar esta cita.'], 403);
+    {
+        // ✅ Corregir formato de hora ANTES del validator
+        if ($request->hora && strlen($request->hora) === 5) {
+            $request->merge(['hora' => $request->hora . ':00']);
         }
 
-        if ($cita->estado === 'cancelada' || Carbon::parse($cita->fecha . ' ' . $cita->hora)->isPast()) {
-            return response()->json(['success' => false, 'message' => 'Esta cita no se puede reprogramar.'], 400);
-        }
+        // ✅ Validar una sola vez con formato correcto
+        $validator = Validator::make($request->all(), [
+            'fecha' => 'required|date_format:Y-m-d|after_or_equal:today',
+            'hora' => 'required|date_format:H:i:s',
+        ], [
+            'fecha.after_or_equal' => 'La fecha no puede ser en el pasado.',
+        ]);
 
-        // ✅ Verificar disponibilidad del doctor
-        $verificacion = $this->verificarDisponibilidad($cita->id_doctor, $request->fecha, $request->hora);
-        if (!$verificacion['disponible']) {
+        if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => $verificacion['mensaje'],
-            ], 409);
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        // ✅ Actualizar cita
-        $cita->fecha = $request->fecha;
-        $cita->hora = $request->hora;
-        $cita->estado = 'pendiente';
-        $cita->save();
+        try {
+            $paciente = Auth::guard('paciente')->user();
+            $cita = Citas::findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Cita reprogramada exitosamente. Queda pendiente de confirmación.',
-            'data' => $cita->load('doctor', 'paciente'),
-        ], 200);
+            if ($cita->id_paciente !== $paciente->id) {
+                return response()->json(['success' => false, 'message' => 'No tienes permiso para modificar esta cita.'], 403);
+            }
 
-    } catch (\Exception $e) {
-        Log::error("❌ Error al reprogramar cita {$id}: " . $e->getMessage());
-        return response()->json(['success' => false, 'message' => 'Error interno al intentar reprogramar la cita.'], 500);
+            if ($cita->estado === 'cancelada' || Carbon::parse($cita->fecha . ' ' . $cita->hora)->isPast()) {
+                return response()->json(['success' => false, 'message' => 'Esta cita no se puede reprogramar.'], 400);
+            }
+
+            // ✅ Verificar disponibilidad del doctor
+            $verificacion = $this->verificarDisponibilidad($cita->id_doctor, $request->fecha, $request->hora);
+            if (!$verificacion['disponible']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $verificacion['mensaje'],
+                ], 409);
+            }
+
+            // ✅ Actualizar cita
+            $cita->fecha = $request->fecha;
+            $cita->hora = $request->hora;
+            $cita->estado = 'pendiente';
+            $cita->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cita reprogramada exitosamente. Queda pendiente de confirmación.',
+                'data' => $cita->load('doctor', 'paciente'),
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error("❌ Error al reprogramar cita {$id}: " . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error interno al intentar reprogramar la cita.'], 500);
+        }
     }
-}
 
 
     /**
@@ -425,6 +425,7 @@ class CitasController extends Controller
 
         // ✅ Enviar notificación al paciente
         $paciente = $cita->paciente;
+
         if ($paciente && $paciente->expo_token) {
             $titulo = "Actualización de tu cita médica";
             $mensaje = match ($nuevoEstado) {
@@ -433,8 +434,9 @@ class CitasController extends Controller
                 default => "Tu cita cambió de estado a: {$nuevoEstado}.",
             };
 
-            \App\Helpers\NotificacionHelper::enviarNotificacion($paciente->expo_token, $titulo, $mensaje);
+            FirebaseHelper::enviarNotificacion($paciente->expo_token, $titulo, $mensaje);
         }
+
 
         return response()->json(['success' => true, 'message' => 'Estado actualizado correctamente.']);
     }
